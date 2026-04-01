@@ -7,6 +7,7 @@ PRIORITY_RANK = {"high": 3, "medium": 2, "low": 1}
 
 @dataclass
 class Task:
+    """Represents a single pet care activity with duration, priority, and status."""
     title: str
     duration_minutes: int
     priority: str = "medium"
@@ -14,19 +15,27 @@ class Task:
     completed: bool = False
 
     def __post_init__(self):
+        """Validate that priority is one of the allowed values."""
         if self.priority not in VALID_PRIORITIES:
             raise ValueError(f"Priority must be one of {VALID_PRIORITIES}, got '{self.priority}'")
 
+    def mark_complete(self) -> None:
+        """Mark this task as completed."""
+        self.completed = True
+
     def is_high_priority(self) -> bool:
+        """Return True if this task has high priority."""
         return self.priority == "high"
 
     def __str__(self) -> str:
+        """Return a formatted string showing priority, title, duration, and status."""
         status = "done" if self.completed else "pending"
         return f"[{self.priority.upper()}] {self.title} ({self.duration_minutes} min, {self.category}) - {status}"
 
 
 @dataclass
 class Pet:
+    """Stores pet details and a list of care tasks."""
     name: str
     species: str
     age: int = 0
@@ -34,33 +43,41 @@ class Pet:
     tasks: list = field(default_factory=list)
 
     def add_need(self, need: str) -> None:
+        """Add a special need to this pet's list."""
         self.special_needs.append(need)
 
     def add_task(self, task: Task) -> None:
+        """Add a care task to this pet's task list."""
         self.tasks.append(task)
 
     def get_summary(self) -> str:
+        """Return a readable summary of the pet's info and special needs."""
         needs = ", ".join(self.special_needs) if self.special_needs else "none"
         return f"{self.name} ({self.species}, age {self.age}) — special needs: {needs}"
 
 
 @dataclass
 class Owner:
+    """Manages multiple pets and provides access to all their tasks."""
     name: str
     available_minutes: int = 60
     preferences: dict = field(default_factory=dict)
     pets: list = field(default_factory=list)
 
     def set_preferences(self, prefs: dict) -> None:
+        """Update the owner's care preferences."""
         self.preferences.update(prefs)
 
     def get_available_time(self) -> int:
+        """Return the owner's available time budget in minutes."""
         return self.available_minutes
 
     def add_pet(self, pet: Pet) -> None:
+        """Register a pet under this owner."""
         self.pets.append(pet)
 
     def get_all_tasks(self) -> list:
+        """Collect and return all tasks across all of the owner's pets."""
         all_tasks = []
         for pet in self.pets:
             all_tasks.extend(pet.tasks)
@@ -69,21 +86,26 @@ class Owner:
 
 @dataclass
 class Schedule:
+    """A daily plan containing an ordered list of tasks for a specific pet."""
     date: str
     owner: Owner
     pet: Pet
     tasks: list = field(default_factory=list)
 
     def add_task(self, task: Task) -> None:
+        """Append a task to the schedule."""
         self.tasks.append(task)
 
     def remove_task(self, task: Task) -> None:
+        """Remove a task from the schedule."""
         self.tasks.remove(task)
 
     def get_total_duration(self) -> int:
+        """Return the sum of all task durations in minutes."""
         return sum(t.duration_minutes for t in self.tasks)
 
     def display(self) -> str:
+        """Return a formatted string representation of the full schedule."""
         lines = []
         lines.append(f"=== Schedule for {self.pet.name} ({self.date}) ===")
         lines.append(f"Owner: {self.owner.name} | Available: {self.owner.available_minutes} min")
@@ -99,7 +121,10 @@ class Schedule:
 
 
 class Scheduler:
+    """The scheduling engine that selects and orders tasks within time constraints."""
+
     def __init__(self, owner: Owner, pet: Pet, available_tasks: list = None, time_limit: int = None, date: str = ""):
+        """Initialize the scheduler with an owner, pet, tasks, and constraints."""
         self.owner = owner
         self.pet = pet
         self.available_tasks = available_tasks if available_tasks is not None else pet.tasks
@@ -107,6 +132,7 @@ class Scheduler:
         self.date = date or str(date if date else today())
 
     def generate_schedule(self) -> Schedule:
+        """Sort tasks by priority and fill the schedule within the time limit."""
         sorted_tasks = sorted(
             self.available_tasks,
             key=lambda t: PRIORITY_RANK.get(t.priority, 0),
@@ -121,6 +147,7 @@ class Scheduler:
         return schedule
 
     def explain(self, schedule: Schedule) -> str:
+        """Return a reasoning summary of why each task was included or skipped."""
         lines = []
         lines.append("Schedule reasoning:")
         skipped = [t for t in self.available_tasks if t not in schedule.tasks]
@@ -133,4 +160,5 @@ class Scheduler:
 
 
 def today() -> str:
+    """Return today's date as a string."""
     return str(date.today())
