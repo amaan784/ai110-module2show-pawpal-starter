@@ -6,46 +6,15 @@
 
 Three core actions a user should be able to perform:
 
-1. **Add a pet** — The user enters basic owner and pet information (pet name, type, any special needs) so the system knows who it's planning care for.
-2. **Add/edit care tasks** — The user creates and manages pet care tasks (walks, feeding, meds, enrichment, grooming) with at least a duration and priority level, so the scheduler has work items to plan around.
-3. **Generate a daily plan** — The user requests a daily schedule that organizes their tasks based on available time, priority, and preferences, and the system explains why it chose that arrangement.
+1. **Add a pet.** The user enters owner and pet info so the system knows who it's planning care for.
+2. **Add or edit care tasks.** The user creates tasks like walks, feeding, or meds with a duration and priority level.
+3. **Generate a daily plan.** The system organizes tasks by priority within the owner's time budget and explains why.
 
-Main objects (classes), their attributes, and methods:
-
-**Owner**
-- Attributes: `name`, `available_minutes` (time budget per day), `preferences` (e.g., preferred walk times), `pets` (list of Pet objects)
-- Methods: `set_preferences()` — update care preferences; `get_available_time()` — return daily time budget; `add_pet()` — register a pet to this owner
-- Responsibility: Represents the human user and their constraints (how much time they have, what they prefer)
-
-**Pet**
-- Attributes: `name`, `species`, `age`, `special_needs` (list of notes like medications or dietary restrictions)
-- Methods: `add_need()` — add a special need; `get_summary()` — return a readable description of the pet
-- Responsibility: Holds all information about the pet that might influence task selection or scheduling
-
-**Task**
-- Attributes: `title`, `duration_minutes`, `priority` (low/medium/high, validated), `category` (walk, feeding, meds, grooming, enrichment)
-- Methods: `is_high_priority()` — check if priority is high; `__str__()` — return a human-readable description
-- Responsibility: Represents a single unit of pet care work with its time cost and importance
-
-**Schedule**
-- Attributes: `date`, `owner`, `pet`, `tasks` (ordered list)
-- Methods: `add_task()` — append a task; `remove_task()` — remove a task; `get_total_duration()` — sum durations of all tasks; `display()` — render the plan as readable output
-- Responsibility: The output artifact — a concrete daily plan that can be displayed to the user
-
-**Scheduler**
-- Attributes: `owner`, `pet`, `available_tasks`, `time_limit`, `date`
-- Methods: `generate_schedule()` — sort and filter tasks by priority and time constraints, return a Schedule; `explain()` — provide reasoning for why tasks were included and ordered
-- Responsibility: The decision-making engine that takes inputs (owner, pet, tasks, constraints) and produces an optimized Schedule
+The system uses five classes. Owner holds the person's name, time budget, and list of pets. Pet stores the animal's details and its own task list. Task represents a single care activity with a title, duration, priority, category, scheduled time, and recurrence frequency. Schedule is the output, an ordered list of tasks for one pet on one day. Scheduler is the brain that sorts tasks by priority, fills the time budget, detects conflicts, and explains its decisions.
 
 **b. Design changes**
 
-After reviewing the skeleton code, three changes were made:
-
-1. **Added `pets` list and `add_pet()` to Owner** — The UML showed Owner owns Pets, but the original skeleton had no way to link them. Without this, there was no way to associate an owner with their pets in code.
-
-2. **Added `date` parameter to Scheduler** — The Scheduler creates a Schedule which requires a date, but had no date to pass. This was a missing data flow between the two classes.
-
-3. **Added `VALID_PRIORITIES` constant** — Priority was a free-form string with no validation, meaning typos like `"hi"` or `"urgent"` would silently pass through. A constant tuple of allowed values makes validation straightforward.
+Three things changed after the initial skeleton was built. First, Owner needed a pets list and an add_pet method because the UML showed ownership but the code had no way to link them. Second, Scheduler needed a date parameter because it creates a Schedule that requires a date, and there was no way to pass one in. Third, a VALID_PRIORITIES constant was added so that typos like "urgent" would raise an error instead of silently passing through.
 
 ---
 
@@ -53,17 +22,11 @@ After reviewing the skeleton code, three changes were made:
 
 **a. Constraints and priorities**
 
-The scheduler considers two main constraints:
-- **Time budget** — the owner's `available_minutes` acts as a hard cap. Tasks are added until time runs out.
-- **Priority** — tasks are sorted high > medium > low, so high-priority tasks are always scheduled first.
-
-Priority was chosen as the primary sort key because a pet owner would rather skip a grooming session than miss medication. Time budget was the natural secondary constraint since every owner has a finite amount of time.
+The scheduler uses two constraints. Priority is the primary sort key, ranking high above medium above low. Time budget is the hard cap, the owner's available_minutes. Tasks are added in priority order until time runs out. Priority came first because a pet owner would rather skip grooming than miss medication.
 
 **b. Tradeoffs**
 
-The conflict detection system checks for **exact time matches only**, not overlapping durations. For example, a 30-minute task at 07:45 and a task at 08:00 would not be flagged as a conflict, even though they overlap by 15 minutes.
-
-This tradeoff is reasonable because: (1) it keeps the logic simple and easy to understand, (2) most pet care tasks are short and scheduled at round times (7:00, 8:00), and (3) for a personal planning tool, an approximate check catches the most common scheduling mistakes without requiring a full interval-overlap algorithm.
+Conflict detection only checks for exact time matches, not overlapping durations. A 30 minute task at 07:45 and another task at 08:00 would not be flagged even though they overlap by 15 minutes. This keeps the logic simple and works well enough for a personal planning tool where most tasks are short and scheduled at round times.
 
 ---
 
@@ -71,13 +34,11 @@ This tradeoff is reasonable because: (1) it keeps the logic simple and easy to u
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used Claude Code throughout this project. For the early design phase I described the scenario and asked it to help brainstorm classes and their responsibilities. During implementation I gave it the skeleton file and asked it to flesh out the logic one class at a time. For testing I described the behaviors I wanted to verify and had it write the pytest functions. The most helpful prompts were the ones where I gave it a specific file and asked a focused question like "what's missing in this class" or "add conflict detection that returns warnings instead of crashing."
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+When the AI first generated the Scheduler class it did not include a date parameter. I noticed that Schedule requires a date but Scheduler had no way to provide one, so the generated code would have broken at runtime. I caught this by reading through the skeleton and tracing how data flows between classes. I asked the AI to fix it and verified the fix by running main.py end to end.
 
 ---
 
@@ -85,13 +46,11 @@ This tradeoff is reasonable because: (1) it keeps the logic simple and easy to u
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+Eight tests cover the core behaviors. Task completion verifies mark_complete flips the status. Task addition checks that a pet's task count increases. Sorting correctness confirms tasks come back in chronological order. Recurrence logic verifies a daily task spawns a new one due the next day. Conflict detection has both a positive test (same time flagged) and a negative test (different times not flagged). Time limit enforcement makes sure the scheduler stops adding tasks when the budget runs out. The empty pet test confirms the scheduler handles zero tasks without crashing.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+4 out of 5. Every core path is tested and all eight tests pass. If I had more time I would test overlapping durations, weekly recurrence, and what happens when two pets have tasks at the same time across different schedules.
 
 ---
 
@@ -99,12 +58,12 @@ This tradeoff is reasonable because: (1) it keeps the logic simple and easy to u
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+The class design held up well from start to finish. The five class structure made it easy to add new features like recurring tasks and conflict detection without rewriting existing code. The Scheduler class in particular worked well as a central place to put all the smart logic.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+I would make conflict detection aware of task durations so it can catch overlapping tasks, not just exact time matches. I would also add the ability to drag and reorder tasks in the Streamlit UI instead of relying only on automatic sorting.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The biggest lesson was that when working with AI tools you still have to be the one who understands how the pieces connect. The AI can write solid code for individual classes but it does not always see the gaps between them, like a missing parameter or a broken data flow. Being the lead architect means reviewing every suggestion against the full picture and catching the things the AI misses.

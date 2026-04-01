@@ -1,35 +1,24 @@
 # PawPal+ (Module 2 Project)
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+PawPal+ is a Streamlit app that helps a pet owner plan care tasks for their pet.
 
 ## Scenario
 
-A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+A busy pet owner needs help staying consistent with pet care. They want an assistant that can track pet care tasks like walks, feeding, meds, enrichment, and grooming. It should consider constraints like time available, priority, and owner preferences. It should also produce a daily plan and explain why it chose that plan.
 
-- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
-- Consider constraints (time available, priority, owner preferences)
-- Produce a daily plan and explain why it chose that plan
+The system is designed first as a UML diagram, then implemented in Python, then connected to the Streamlit UI.
 
-Your job is to design the system first (UML), then implement the logic in Python, then connect it to the Streamlit UI.
+## Features
 
-## What you will build
+**Priority Based Scheduling** sorts all tasks from high to low priority and packs them into the owner's available time budget. High priority tasks like medication and feeding always come first.
 
-Your final app should:
+**Sort by Time** arranges tasks in chronological order using their scheduled time in HH:MM format, so the daily plan reads like a real timeline.
 
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
+**Filter by Status or Pet** lets you view only pending tasks or narrow the list down to a specific pet. Useful when an owner has multiple animals.
 
-## Smarter Scheduling
+**Recurring Tasks** automatically generate the next occurrence when marked complete. A daily walk due today becomes a new pending task due tomorrow. Weekly tasks jump ahead by seven days.
 
-Beyond basic priority-based scheduling, PawPal+ includes:
-
-- **Sort by time** — tasks with a `scheduled_time` (HH:MM) are sorted chronologically for a clear daily timeline
-- **Filter by status or pet** — view only pending tasks, or narrow down to a specific pet's tasks
-- **Recurring tasks** — daily or weekly tasks automatically generate the next occurrence when marked complete
-- **Conflict detection** — warns when two tasks are scheduled at the exact same time
+**Conflict Detection** scans all scheduled tasks and warns you when two tasks land on the exact same time slot. The warning shows up in the UI so you can fix it before building the schedule.
 
 ## Testing PawPal+
 
@@ -39,17 +28,9 @@ Run the test suite with:
 python -m pytest tests/test_pawpal.py -v
 ```
 
-The tests cover:
+The tests cover task completion, task addition to pets, chronological sorting, daily recurrence logic, conflict detection with both positive and negative cases, time limit enforcement, and the edge case of scheduling for a pet with no tasks.
 
-- **Task completion** — `mark_complete()` changes task status
-- **Task addition** — adding a task to a pet increases its task count
-- **Sorting correctness** — `sort_by_time()` returns tasks in chronological order
-- **Recurrence logic** — marking a daily task complete creates a new task due the next day
-- **Conflict detection** — flags duplicate scheduled times, no false positives for different times
-- **Time limit** — scheduler stops adding tasks when time budget is exceeded
-- **Empty pet** — scheduler handles a pet with no tasks gracefully
-
-**Confidence Level: 4/5** — All core scheduling behaviors are tested including happy paths and edge cases. The main gap is that overlapping durations (not just exact time matches) are not tested because the scheduler does not yet support duration-aware conflict detection.
+Confidence Level: 4 out of 5. All core scheduling behaviors are tested with both happy paths and edge cases. The main gap is that overlapping durations are not tested because the scheduler only checks for exact time matches, not whether two tasks actually overlap in real minutes.
 
 ## Getting started
 
@@ -61,12 +42,14 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Suggested workflow
+### Running the app
 
-1. Read the scenario carefully and identify requirements and edge cases.
-2. Draft a UML diagram (classes, attributes, methods, relationships).
-3. Convert UML into Python class stubs (no logic yet).
-4. Implement scheduling logic in small increments.
-5. Add tests to verify key behaviors.
-6. Connect your logic to the Streamlit UI in `app.py`.
-7. Refine UML so it matches what you actually built.
+```bash
+streamlit run app.py
+```
+
+### Running tests
+
+```bash
+python -m pytest tests/test_pawpal.py -v
+```

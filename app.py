@@ -13,7 +13,7 @@ if "owner" not in st.session_state:
 if "selected_pet" not in st.session_state:
     st.session_state.selected_pet = None
 
-# --- Step 1: Owner Setup ---
+# --- Owner Setup ---
 st.subheader("Owner Info")
 
 if st.session_state.owner is None:
@@ -26,7 +26,7 @@ else:
     owner = st.session_state.owner
     st.success(f"Owner: **{owner.name}** | Available: **{owner.available_minutes} min**")
 
-# --- Step 2: Add Pets ---
+# --- Add Pets ---
 if st.session_state.owner is not None:
     owner = st.session_state.owner
     st.divider()
@@ -47,7 +47,7 @@ if st.session_state.owner is not None:
 
     if owner.pets:
         for pet in owner.pets:
-            st.write(f"- {pet.get_summary()}")
+            st.write(f"{pet.get_summary()}")
 
         pet_names = [p.name for p in owner.pets]
         selected = st.selectbox("Select a pet to manage tasks", pet_names)
@@ -55,7 +55,7 @@ if st.session_state.owner is not None:
     else:
         st.info("No pets yet. Add one above.")
 
-# --- Step 3: Add Tasks to Selected Pet ---
+# --- Add Tasks to Selected Pet ---
 if st.session_state.selected_pet is not None:
     pet = st.session_state.selected_pet
     owner = st.session_state.owner
@@ -70,20 +70,42 @@ if st.session_state.selected_pet is not None:
             duration = st.number_input("Duration (min)", min_value=1, max_value=240, value=20)
         with col3:
             priority = st.selectbox("Priority", ["high", "medium", "low"])
-        category = st.selectbox("Category", ["walk", "feeding", "meds", "enrichment", "grooming", "general"])
+        col4, col5 = st.columns(2)
+        with col4:
+            category = st.selectbox("Category", ["walk", "feeding", "meds", "enrichment", "grooming", "general"])
+        with col5:
+            scheduled_time = st.text_input("Scheduled time (HH:MM)", value="")
+        frequency = st.selectbox("Frequency", ["once", "daily", "weekly"])
         if st.form_submit_button("Add Task"):
-            pet.add_task(Task(title=task_title, duration_minutes=int(duration), priority=priority, category=category))
+            pet.add_task(Task(
+                title=task_title, duration_minutes=int(duration), priority=priority,
+                category=category, scheduled_time=scheduled_time, frequency=frequency,
+            ))
             st.rerun()
 
     if pet.tasks:
+        scheduler = Scheduler(owner=owner, pet=pet, date=today())
+        sorted_tasks = scheduler.sort_by_time()
         st.table([
-            {"Task": t.title, "Duration": f"{t.duration_minutes} min", "Priority": t.priority, "Category": t.category}
-            for t in pet.tasks
+            {
+                "Time": t.scheduled_time or "N/A",
+                "Task": t.title,
+                "Duration": f"{t.duration_minutes} min",
+                "Priority": t.priority,
+                "Category": t.category,
+                "Frequency": t.frequency,
+            }
+            for t in sorted_tasks
         ])
+
+        # Show conflict warnings
+        conflicts = scheduler.detect_conflicts()
+        for warning in conflicts:
+            st.warning(f"Scheduling conflict: {warning}")
     else:
         st.info("No tasks yet. Add one above.")
 
-    # --- Step 4: Generate Schedule ---
+    # --- Generate Schedule ---
     st.divider()
     st.subheader("Generate Schedule")
 
