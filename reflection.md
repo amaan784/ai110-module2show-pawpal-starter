@@ -53,13 +53,17 @@ After reviewing the skeleton code, three changes were made:
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers two main constraints:
+- **Time budget** — the owner's `available_minutes` acts as a hard cap. Tasks are added until time runs out.
+- **Priority** — tasks are sorted high > medium > low, so high-priority tasks are always scheduled first.
+
+Priority was chosen as the primary sort key because a pet owner would rather skip a grooming session than miss medication. Time budget was the natural secondary constraint since every owner has a finite amount of time.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The conflict detection system checks for **exact time matches only**, not overlapping durations. For example, a 30-minute task at 07:45 and a task at 08:00 would not be flagged as a conflict, even though they overlap by 15 minutes.
+
+This tradeoff is reasonable because: (1) it keeps the logic simple and easy to understand, (2) most pet care tasks are short and scheduled at round times (7:00, 8:00), and (3) for a personal planning tool, an approximate check catches the most common scheduling mistakes without requiring a full interval-overlap algorithm.
 
 ---
 

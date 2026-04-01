@@ -64,6 +64,23 @@ for t in whiskers_tasks:
     print(f"  {t}")
 print()
 
+# --- Demo: Conflict detection ---
+print("=" * 45)
+print("CONFLICT DETECTION")
+print("=" * 45)
+# Mochi already has "Breakfast + supplement" at 08:00 — add another at the same time
+mochi.add_task(Task(title="Grooming session", duration_minutes=15, priority="low", category="grooming", scheduled_time="08:00"))
+scheduler = Scheduler(owner=owner, pet=mochi, date=today())
+conflicts = scheduler.detect_conflicts()
+if conflicts:
+    for warning in conflicts:
+        print(f"  WARNING: {warning}")
+else:
+    print("  No conflicts found.")
+# Remove the conflicting task so it doesn't affect later demos
+mochi.tasks.pop()
+print()
+
 # --- Demo: Recurring tasks ---
 print("=" * 45)
 print("RECURRING TASKS")

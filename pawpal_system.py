@@ -184,6 +184,22 @@ class Scheduler:
                 result = [t for t in result if t in pet.tasks]
         return result
 
+    def detect_conflicts(self) -> list:
+        """Check for tasks scheduled at the exact same time and return warnings."""
+        warnings = []
+        timed = [t for t in self.available_tasks if t.scheduled_time]
+        seen = {}
+        for task in timed:
+            if task.scheduled_time in seen:
+                other = seen[task.scheduled_time]
+                warnings.append(
+                    f"Conflict at {task.scheduled_time}: "
+                    f"'{task.title}' and '{other.title}' are both scheduled at the same time"
+                )
+            else:
+                seen[task.scheduled_time] = task
+        return warnings
+
     def mark_task_complete(self, task: Task) -> None:
         """Mark a task complete and auto-add the next occurrence if recurring."""
         next_task = task.mark_complete()
