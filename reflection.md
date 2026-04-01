@@ -10,8 +10,27 @@ Three core actions a user should be able to perform:
 2. **Add/edit care tasks** — The user creates and manages pet care tasks (walks, feeding, meds, enrichment, grooming) with at least a duration and priority level, so the scheduler has work items to plan around.
 3. **Generate a daily plan** — The user requests a daily schedule that organizes their tasks based on available time, priority, and preferences, and the system explains why it chose that arrangement.
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+Main objects (classes), their attributes, and methods:
+
+**Owner**
+- Attributes: `name`, `available_minutes` (time budget per day), `preferences` (e.g., preferred walk times)
+- Methods: `set_preferences()` — update care preferences; `get_available_time()` — return daily time budget
+
+**Pet**
+- Attributes: `name`, `species`, `age`, `special_needs` (list of notes like medications or dietary restrictions)
+- Methods: `add_need()` — add a special need; `get_summary()` — return a readable description of the pet
+
+**Task**
+- Attributes: `title`, `duration_minutes`, `priority` (low/medium/high), `category` (walk, feeding, meds, grooming, enrichment)
+- Methods: `is_high_priority()` — check if priority is high; `__str__()` — return a human-readable description
+
+**Schedule**
+- Attributes: `date`, `owner`, `pet`, `tasks` (ordered list), `total_duration`
+- Methods: `add_task()` — append a task; `remove_task()` — remove a task; `get_total_duration()` — sum durations of all tasks; `display()` — render the plan as readable output
+
+**Scheduler**
+- Attributes: `owner`, `pet`, `available_tasks`, `time_limit`
+- Methods: `generate_schedule()` — sort and filter tasks by priority and time constraints, return a Schedule; `explain()` — provide reasoning for why tasks were included and ordered
 
 **b. Design changes**
 
