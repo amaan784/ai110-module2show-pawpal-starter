@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 
 VALID_PRIORITIES = ("low", "medium", "high")
 PRIORITY_RANK = {"high": 3, "medium": 2, "low": 1}
@@ -13,15 +13,37 @@ class Task:
     priority: str = "medium"
     category: str = "general"
     completed: bool = False
+    scheduled_time: str = ""
+    frequency: str = "once"
+    due_date: str = ""
 
     def __post_init__(self):
         """Validate that priority is one of the allowed values."""
         if self.priority not in VALID_PRIORITIES:
             raise ValueError(f"Priority must be one of {VALID_PRIORITIES}, got '{self.priority}'")
+        if not self.due_date:
+            self.due_date = str(date.today())
 
-    def mark_complete(self) -> None:
-        """Mark this task as completed."""
+    def mark_complete(self):
+        """Mark this task as completed. Returns a new Task if recurring, else None."""
         self.completed = True
+        if self.frequency == "daily":
+            next_due = date.fromisoformat(self.due_date) + timedelta(days=1)
+            return Task(
+                title=self.title, duration_minutes=self.duration_minutes,
+                priority=self.priority, category=self.category,
+                scheduled_time=self.scheduled_time, frequency=self.frequency,
+                due_date=str(next_due),
+            )
+        elif self.frequency == "weekly":
+            next_due = date.fromisoformat(self.due_date) + timedelta(weeks=1)
+            return Task(
+                title=self.title, duration_minutes=self.duration_minutes,
+                priority=self.priority, category=self.category,
+                scheduled_time=self.scheduled_time, frequency=self.frequency,
+                due_date=str(next_due),
+            )
+        return None
 
     def is_high_priority(self) -> bool:
         """Return True if this task has high priority."""
@@ -145,6 +167,28 @@ class Scheduler:
                 schedule.add_task(task)
                 remaining -= task.duration_minutes
         return schedule
+
+    def sort_by_time(self, tasks: list = None) -> list:
+        """Sort tasks by their scheduled_time in HH:MM format."""
+        task_list = tasks if tasks is not None else self.available_tasks
+        return sorted(task_list, key=lambda t: t.scheduled_time if t.scheduled_time else "99:99")
+
+    def filter_tasks(self, completed: bool = None, pet_name: str = None) -> list:
+        """Filter available tasks by completion status and/or pet name."""
+        result = self.available_tasks
+        if completed is not None:
+            result = [t for t in result if t.completed == completed]
+        if pet_name is not None:
+            pet = next((p for p in self.owner.pets if p.name == pet_name), None)
+            if pet:
+                result = [t for t in result if t in pet.tasks]
+        return result
+
+    def mark_task_complete(self, task: Task) -> None:
+        """Mark a task complete and auto-add the next occurrence if recurring."""
+        next_task = task.mark_complete()
+        if next_task is not None:
+            self.pet.add_task(next_task)
 
     def explain(self, schedule: Schedule) -> str:
         """Return a reasoning summary of why each task was included or skipped."""
