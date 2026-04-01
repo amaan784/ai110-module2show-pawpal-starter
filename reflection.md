@@ -13,29 +13,39 @@ Three core actions a user should be able to perform:
 Main objects (classes), their attributes, and methods:
 
 **Owner**
-- Attributes: `name`, `available_minutes` (time budget per day), `preferences` (e.g., preferred walk times)
-- Methods: `set_preferences()` — update care preferences; `get_available_time()` — return daily time budget
+- Attributes: `name`, `available_minutes` (time budget per day), `preferences` (e.g., preferred walk times), `pets` (list of Pet objects)
+- Methods: `set_preferences()` — update care preferences; `get_available_time()` — return daily time budget; `add_pet()` — register a pet to this owner
+- Responsibility: Represents the human user and their constraints (how much time they have, what they prefer)
 
 **Pet**
 - Attributes: `name`, `species`, `age`, `special_needs` (list of notes like medications or dietary restrictions)
 - Methods: `add_need()` — add a special need; `get_summary()` — return a readable description of the pet
+- Responsibility: Holds all information about the pet that might influence task selection or scheduling
 
 **Task**
-- Attributes: `title`, `duration_minutes`, `priority` (low/medium/high), `category` (walk, feeding, meds, grooming, enrichment)
+- Attributes: `title`, `duration_minutes`, `priority` (low/medium/high, validated), `category` (walk, feeding, meds, grooming, enrichment)
 - Methods: `is_high_priority()` — check if priority is high; `__str__()` — return a human-readable description
+- Responsibility: Represents a single unit of pet care work with its time cost and importance
 
 **Schedule**
-- Attributes: `date`, `owner`, `pet`, `tasks` (ordered list), `total_duration`
+- Attributes: `date`, `owner`, `pet`, `tasks` (ordered list)
 - Methods: `add_task()` — append a task; `remove_task()` — remove a task; `get_total_duration()` — sum durations of all tasks; `display()` — render the plan as readable output
+- Responsibility: The output artifact — a concrete daily plan that can be displayed to the user
 
 **Scheduler**
-- Attributes: `owner`, `pet`, `available_tasks`, `time_limit`
+- Attributes: `owner`, `pet`, `available_tasks`, `time_limit`, `date`
 - Methods: `generate_schedule()` — sort and filter tasks by priority and time constraints, return a Schedule; `explain()` — provide reasoning for why tasks were included and ordered
+- Responsibility: The decision-making engine that takes inputs (owner, pet, tasks, constraints) and produces an optimized Schedule
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+After reviewing the skeleton code, three changes were made:
+
+1. **Added `pets` list and `add_pet()` to Owner** — The UML showed Owner owns Pets, but the original skeleton had no way to link them. Without this, there was no way to associate an owner with their pets in code.
+
+2. **Added `date` parameter to Scheduler** — The Scheduler creates a Schedule which requires a date, but had no date to pass. This was a missing data flow between the two classes.
+
+3. **Added `VALID_PRIORITIES` constant** — Priority was a free-form string with no validation, meaning typos like `"hi"` or `"urgent"` would silently pass through. A constant tuple of allowed values makes validation straightforward.
 
 ---
 
