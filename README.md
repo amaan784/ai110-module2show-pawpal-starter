@@ -31,6 +31,26 @@ Beyond basic priority-based scheduling, PawPal+ includes:
 - **Recurring tasks** — daily or weekly tasks automatically generate the next occurrence when marked complete
 - **Conflict detection** — warns when two tasks are scheduled at the exact same time
 
+## Testing PawPal+
+
+Run the test suite with:
+
+```bash
+python -m pytest tests/test_pawpal.py -v
+```
+
+The tests cover:
+
+- **Task completion** — `mark_complete()` changes task status
+- **Task addition** — adding a task to a pet increases its task count
+- **Sorting correctness** — `sort_by_time()` returns tasks in chronological order
+- **Recurrence logic** — marking a daily task complete creates a new task due the next day
+- **Conflict detection** — flags duplicate scheduled times, no false positives for different times
+- **Time limit** — scheduler stops adding tasks when time budget is exceeded
+- **Empty pet** — scheduler handles a pet with no tasks gracefully
+
+**Confidence Level: 4/5** — All core scheduling behaviors are tested including happy paths and edge cases. The main gap is that overlapping durations (not just exact time matches) are not tested because the scheduler does not yet support duration-aware conflict detection.
+
 ## Getting started
 
 ### Setup
